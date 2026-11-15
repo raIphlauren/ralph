@@ -44,6 +44,10 @@
   .btn:hover{transform:translate(-2px,-2px);box-shadow:7px 7px 0 var(--red);background:var(--lime);color:var(--ink);border-color:var(--lime)}
   .btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--red)}
 
+  .motto{max-width:30ch;padding-left:16px;border-left:4px solid var(--red);font-family:var(--disp);font-weight:700;font-size:clamp(1.05rem,2.6vw,1.35rem);line-height:1.35;letter-spacing:-.01em;
+    background:linear-gradient(90deg,#26251f 0%,#ffffff 50%,#26251f 100%);background-size:200% 100%;
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;animation:wave 3.2s linear infinite}
+  @keyframes wave{to{background-position:-200% 0}}
   .photo{position:relative;justify-self:center;width:min(300px,70vw);aspect-ratio:1}
   .photo .pic{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 20%;filter:grayscale(1) contrast(1.08);
     border:3px solid var(--text);background:var(--lime);box-shadow:8px 8px 0 var(--red);
@@ -51,10 +55,9 @@
   .photo .mono{display:none;position:absolute;inset:0;align-items:center;justify-content:center;font-family:var(--disp);font-weight:900;font-size:6rem;background:var(--lime);color:var(--ink);border:3px solid var(--text);box-shadow:8px 8px 0 var(--red);border-radius:42% 58% 55% 45%/50% 42% 58% 50%;animation:morph 9s ease-in-out infinite}
   .photo.noimg .pic{display:none}.photo.noimg .mono{display:flex}
   @keyframes morph{0%,100%{border-radius:42% 58% 55% 45%/50% 42% 58% 50%}50%{border-radius:58% 42% 45% 55%/42% 58% 42% 58%}}
-  .badge{position:absolute;right:-26px;bottom:-22px;width:108px;height:108px;border-radius:50%;background:var(--red);color:var(--ink);border:3px solid var(--bg);display:grid;place-items:center}
-  .badge svg{position:absolute;inset:0;width:100%;height:100%;animation:spin 14s linear infinite}
-  .badge text{font-family:var(--disp);font-weight:700;font-size:10.5px;fill:var(--ink)}
-  .badge b{font-family:var(--disp);font-size:1.5rem}
+  .snake{position:absolute;right:-70px;bottom:-62px;width:230px;height:auto;aspect-ratio:610/576;pointer-events:none}
+  .sv{position:absolute;width:2px;height:2px;opacity:.01;pointer-events:none}
+  @media (max-width:760px){.snake{right:-18px;bottom:-40px;width:180px}}
   @keyframes spin{to{transform:rotate(360deg)}}
 
   /* бегущая строка */
@@ -96,6 +99,7 @@
   @media (prefers-reduced-motion:reduce){
     *,*::before,*::after{animation:none!important;transition:none!important}
     h1 .ch,.rv{opacity:1;transform:none}
+    .motto{-webkit-text-fill-color:#fff;color:#fff;background:none}
   }
 </style>
 </head>
@@ -112,16 +116,13 @@
       <span class="tag">Услуги OSINT по выгодной цене</span>
       <h1 id="title" aria-label="Ralph">Ralph</h1>
       <p class="lead">Прайс-лист моих услуг. Перед обращением ознакомьтесь с условиями внизу страницы.</p>
-      <a class="btn" href="#terms">Ознакомиться ↓</a>
+      <p class="motto">Мы не доксеры мы умнее мы ищем сами а не зависимы от других</p>
     </div>
     <div class="photo" id="photo">
       <img class="pic" src="photo.jpg" alt="Ralph">
       <div class="mono">R</div>
-      <div class="badge" aria-hidden="true">
-        <svg viewBox="0 0 108 108"><defs><path id="ring" d="M54,54 m-40,0 a40,40 0 1,1 80,0 a40,40 0 1,1 -80,0"/></defs>
-          <text><textPath href="#ring" textLength="248" lengthAdjust="spacing">OSINT • OSINT • OSINT • OSINT • </textPath></text></svg>
-        <b>✦</b>
-      </div>
+      <video class="sv" id="sv" src="snake.mp4" autoplay muted loop playsinline preload="auto" aria-hidden="true"></video>
+      <canvas class="snake" id="sc" width="400" height="378" aria-hidden="true"></canvas>
     </div>
   </section>
 
@@ -210,6 +211,30 @@
   },{threshold:.12});
   document.querySelectorAll('.rv').forEach(function(el,i){el.style.transitionDelay=(i%2)*0.1+'s';io.observe(el)});
 })();
+
+  /* змея: белый фон видео делаем прозрачным */
+  (function(){
+    var v=document.getElementById('sv'),c=document.getElementById('sc');
+    if(!v||!c)return;
+    var x=c.getContext('2d',{willReadFrequently:true}),W=c.width,H=c.height;
+    function draw(){
+      if(v.readyState>=2){
+        try{
+          x.drawImage(v,0,0,W,H);
+          var d=x.getImageData(0,0,W,H),a=d.data;
+          for(var i=0;i<a.length;i+=4){
+            var al=255-(a[i]+a[i+1]+a[i+2])/3;
+            al=al<45?0:Math.min(255,(al-45)*1.5);
+            a[i]=241;a[i+1]=239;a[i+2]=231;a[i+3]=al;
+          }
+          x.putImageData(d,0,0);
+        }catch(e){}
+      }
+      if(v.requestVideoFrameCallback)v.requestVideoFrameCallback(draw);else requestAnimationFrame(draw);
+    }
+    var p=v.play();if(p&&p.catch)p.catch(function(){});
+    draw();
+  })();
 </script>
 </body>
 </html>
